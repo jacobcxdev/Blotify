@@ -8,7 +8,6 @@
 
 
 
-
 /*          Preferences Button          */
 
 @interface RootSettingsViewController : UIViewController
@@ -66,7 +65,9 @@
 
 
 
+
 /*        Set Colours        */
+
 static UIView *tabNPEffectView;
 
 @interface SPTTheme
@@ -77,21 +78,11 @@ static UIView *tabNPEffectView;
 
 %hook SPTTheme
 + (id)binaryThemeWithPlist:(id)arg1 {
-
     NSString *plistPath = [[NSBundle mainBundle] pathForResource:@"Theme" ofType:@"plist"];
     NSMutableDictionary *plist = [[NSMutableDictionary alloc] initWithContentsOfFile:plistPath];
 
-
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"tweakEnabled"]) {
-        NSLog(@"ColorifyXI Enabled");
-
-        plist[@"colors"][@"glueGray7Color"][@""] = [self hex9WithPlistKey:plist[@"colors"][@"glueGray7Color"][@""] forKey:@"primaryBackground" withFallback:@"#121212"];
-        plist[@"colors"][@"glueGray15Color"][@""] = [self hex9WithPlistKey:plist[@"colors"][@"glueGray15Color"][@""] forKey:@"tabBarTint" withFallback:@"#282828"];
-
-    } else {
-        NSLog(@"ColorifyXI Disabled");
-    }
-    
+    plist[@"colors"][@"glueGray7Color"][@""] = [self hex9WithPlistKey:plist[@"colors"][@"glueGray7Color"][@""] forKey:@"primaryBackground" withFallback:@"#121212"];
+    plist[@"colors"][@"glueGray15Color"][@""] = [self hex9WithPlistKey:plist[@"colors"][@"glueGray15Color"][@""] forKey:@"tabBarTint" withFallback:@"#282828"];
 
     arg1 = plist;
     return %orig;
@@ -110,100 +101,47 @@ static UIView *tabNPEffectView;
 %end
 
 
-@interface SPNavigationController : UIViewController
-@property (retain, nonatomic) UIView *backgroundContainerView;
-@property (retain, nonatomic) UIView *navigationBarBackgroundView;
-@end
-
-%hook SPNavigationController
-- (void)viewDidLoad {
-    %orig;
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"tweakEnabled"]) {
-        if (![[[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"] isEqual:@"1c1c1c"] || ![[[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"] isEqual:@"1C1C1C"]) {
-            UIView *colouredView = [[UIView alloc] initWithFrame:self.navigationBarBackgroundView.frame];
-            colouredView.backgroundColor = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"], @"#1c1c1c");
-            [self.backgroundContainerView insertSubview:colouredView atIndex:0];
-
-            colouredView.translatesAutoresizingMaskIntoConstraints = false;
-
-            NSLayoutConstraint *widthConstraint = [NSLayoutConstraint constraintWithItem:colouredView attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:self.backgroundContainerView attribute:NSLayoutAttributeWidth multiplier:1.0 constant:0];
-            NSLayoutConstraint *heightConstraint = [NSLayoutConstraint constraintWithItem:colouredView attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:self.backgroundContainerView attribute:NSLayoutAttributeHeight multiplier:1.0 constant:0];
-    
-            [self.backgroundContainerView addConstraint:widthConstraint];
-            [self.backgroundContainerView addConstraint:heightConstraint];
-
-            self.navigationBarBackgroundView.subviews[1].backgroundColor = [UIColor clearColor];
-        } else {
-            self.navigationBarBackgroundView.subviews[1].backgroundColor = [UIColor colorWithRed:0.110 green:0.110 blue:0.110 alpha:0.730];
-        }
-    }
-}
-%end
 
 
-@interface SPTNowPlayingBarContainerViewController : UIViewController
-@property (retain, nonatomic) UIView *backgroundView;
-@end
 
-%hook SPTNowPlayingBarContainerViewController
-- (void)viewDidLoad {
-    %orig;
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"tweakEnabled"]) {
-        tabNPEffectView = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleDark]];
-        tabNPEffectView.subviews[1].backgroundColor = [UIColor clearColor];
-        [self.backgroundView addSubview:tabNPEffectView];
-        self.backgroundView.backgroundColor = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"tabBarTint"], @"#282828");
-    }
-}
-%end
-
-@interface SPTNowPlayingBarContentView
-@end
-
-%hook SPTNowPlayingBarContentView
-- (void)setFrame:(CGRect)arg1 {
-    %orig;
-    tabNPEffectView.frame = CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, arg1.size.height);
-}
-%end
-
-%hook UITabBar
-- (void)didMoveToWindow {
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"tweakEnabled"]) {
-        bool alreadyEnabled = false;
-        for (int i = 0; i < self.subviews.count; i++) {
-            if ([self.subviews[i] isKindOfClass:[UIVisualEffectView class]]) {
-                alreadyEnabled = true;
-            }
-        }
-        if (!alreadyEnabled) {
-            UIView *effectView = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleDark]];
-            effectView.subviews[1].backgroundColor = [UIColor clearColor];
-            [self addSubview:effectView];
-            effectView.frame = CGRectMake(0, 0, self.frame.size.width, self.frame.size.height);
-        }
-    }
-    %orig;
-}
-%end
-
-@interface _UIBarBackground : UIView
-@end
-
-%hook _UIBarBackground
-- (void)setBackgroundColor:(id)arg1 {
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"tweakEnabled"]) {
-        if ([self.superview isKindOfClass:[UITabBar class]]) {
-            arg1 = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"tabBarTint"], @"#282828");
-        }
-    }
-    %orig;
-}
-%end
-
+/*        Screen Height        */
 
 @interface EXP_HUBCollectionView : UIView
 @property (nonatomic, assign, readwrite) CGPoint contentOffset;
+@end
+@interface SPTAsyncLoadingView : UIView
+@end
+@interface SPTTableView : UITableView
+@end
+@interface SPTCollectionOverviewViewController : UIViewController
+@end
+@interface SPTLegacyHubViewController : UIViewController
+@end
+@interface SPTStationViewController : UIViewController
+@end
+@interface SPTPlaylistFolderViewController : UIViewController
+@end
+@interface SPTStationsListViewController : UIViewController
+@end
+@interface SPTCollectionSongsViewController : UIViewController
+@end
+@interface SPTCollectionAlbumsViewController : UIViewController
+@end
+@interface SPTCollectionAlbumViewController : UIViewController
+@end
+@interface SPTCollectionArtistsViewController : UIViewController
+@end
+@interface SPTCollectionArtistViewController : UIViewController
+@end
+@interface SPTCollectionPodcastOverviewViewController : UIViewController
+@end
+@interface SPTPodcastViewController : UIViewController
+@end
+@interface SPTCollectionVideoOverviewViewController : UIViewController
+@end
+@interface SPTProfileViewController : UIViewController
+@end
+@interface SPTProfileViewAllViewController : UIViewController
 @end
 
 %hook EXP_HUBCollectionView
@@ -213,52 +151,39 @@ static UIView *tabNPEffectView;
     }
     %orig;
 }
-%end
-
-
-@interface EXP_HUBContainerView : UIView
-@end
-
-%hook EXP_HUBContainerView
 - (void)layoutSubviews {
     %orig;
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"tweakEnabled"]) {
-        [self spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
-    }
+    [self spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
 }
 %end
-
-
-@interface SPTLegacyHubViewController : UIViewController
-@end
-@interface SPTSearch2RootViewController : UIViewController
-@end
-@interface SPTCollectionOverviewViewController : UIViewController
-@end
-
-%hook UIView
-- (void)layoutSubviews {
-    %orig;
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"tweakEnabled"]) {
-        if ([[self spt_viewController] isKindOfClass:[%c(SPTLegacyHubViewController) class]]) {
-            [self spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
-        } else if ([[self spt_viewController] isKindOfClass:[%c(SPTSearch2RootViewController) class]]) {
-            [self spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
-        } else if ([[self spt_viewController] isKindOfClass:[%c(SPTCollectionOverviewViewController) class]]) {
-            [self spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
-        }
-    }
-}
-%end
-
-
-@interface SPTAsyncLoadingView : UIView
-@end
 
 %hook SPTAsyncLoadingView
 - (void)layoutSubviews {
     %orig;
     [self spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+}
+%end
+
+%hook SPTTableView
+- (void)layoutSubviews {
+    %orig;
+    if ([[self spt_viewController] isKindOfClass:[%c(SPTPodcastViewController) class]]) {
+        [self spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+    }
+}
+%end
+
+%hook SPTCollectionOverviewViewController
+- (void)viewDidLayoutSubviews {
+    %orig;
+    [self.view spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+}
+%end
+
+%hook SPTLegacyHubViewController
+- (void)viewDidLayoutSubviews {
+    %orig;
+    [self.view spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
 }
 %end
 
@@ -276,6 +201,223 @@ static UIView *tabNPEffectView;
 }
 %end
 
+%hook SPTStationViewController
+- (void)viewDidLayoutSubviews {
+    %orig;
+    [self.view spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+}
+%end
+
+%hook SPTPlaylistFolderViewController
+- (void)viewDidLayoutSubviews {
+    %orig;
+    [self.view spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+}
+%end
+
+%hook SPTStationsListViewController
+- (void)viewDidLayoutSubviews {
+    %orig;
+    [self.view spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+}
+%end
+
+%hook SPTCollectionSongsViewController
+- (void)viewDidLayoutSubviews {
+    %orig;
+    [self.view spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+}
+%end
+
+%hook SPTCollectionAlbumsViewController
+- (void)viewDidLayoutSubviews {
+    %orig;
+    [self.view spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+}
+%end
+
+%hook SPTCollectionAlbumViewController
+- (void)viewDidLayoutSubviews {
+    %orig;
+    [self.view spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+}
+%end
+
+%hook SPTCollectionArtistsViewController
+- (void)viewDidLayoutSubviews {
+    %orig;
+    [self.view spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+}
+%end
+
+%hook SPTCollectionArtistViewController
+- (void)viewDidLayoutSubviews {
+    %orig;
+    [self.view spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+}
+%end
+
+%hook SPTCollectionPodcastOverviewViewController
+- (void)viewDidLayoutSubviews {
+    %orig;
+    [self.view spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+}
+%end
+
+%hook SPTPodcastViewController
+- (void)viewDidLayoutSubviews {
+    %orig;
+    [self.view spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+}
+%end
+
+%hook SPTCollectionVideoOverviewViewController
+- (void)viewDidLayoutSubviews {
+    %orig;
+    [self.view spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+}
+%end
+
+%hook SPTProfileViewController
+- (void)viewDidLayoutSubviews {
+    %orig;
+    [self.view spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+}
+%end
+
+%hook SPTProfileViewAllViewController
+- (void)viewDidLayoutSubviews {
+    %orig;
+    [self.view spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+}
+%end
+
+
+
+
+/*        Navigation Bar        */
+
+@interface SPNavigationController : UIViewController
+@property (retain, nonatomic) UIView *backgroundContainerView;
+@property (retain, nonatomic) UIView *navigationBarBackgroundView;
+@end
+
+%hook SPNavigationController
+- (void)viewDidLoad {
+    %orig;
+    if (![[[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"] isEqual:@"1c1c1c"] || ![[[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"] isEqual:@"1C1C1C"]) {
+        UIView *colouredView = [[UIView alloc] initWithFrame:self.navigationBarBackgroundView.frame];
+        colouredView.backgroundColor = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"], @"#1c1c1c");
+        [self.backgroundContainerView insertSubview:colouredView atIndex:0];
+
+        colouredView.translatesAutoresizingMaskIntoConstraints = false;
+
+        NSLayoutConstraint *widthConstraint = [NSLayoutConstraint constraintWithItem:colouredView attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:self.backgroundContainerView attribute:NSLayoutAttributeWidth multiplier:1.0 constant:0];
+        NSLayoutConstraint *heightConstraint = [NSLayoutConstraint constraintWithItem:colouredView attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:self.backgroundContainerView attribute:NSLayoutAttributeHeight multiplier:1.0 constant:0];
+
+        [self.backgroundContainerView addConstraint:widthConstraint];
+        [self.backgroundContainerView addConstraint:heightConstraint];
+        self.navigationBarBackgroundView.subviews[1].backgroundColor = [UIColor clearColor];
+    } else {
+        self.navigationBarBackgroundView.subviews[1].backgroundColor = [UIColor colorWithRed:0.000 green:0.000 blue:0.000 alpha:0.702];
+    }
+}
+%end
+
+
+@interface SPTHomeHubsRendererViewController : UIViewController
+@property (retain, nonatomic) UIView *statusBarBackgroundView;
+@end
+
+%hook SPTHomeHubsRendererViewController
+- (void)viewDidLoad {
+    %orig;
+    if (![[[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"] isEqual:@"1c1c1c"] || ![[[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"] isEqual:@"1C1C1C"]) {
+        self.statusBarBackgroundView.backgroundColor = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"], @"#000000");
+
+        UIView *effectView = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleDark]];
+        effectView.subviews[1].backgroundColor = [UIColor clearColor];
+        effectView.frame = self.statusBarBackgroundView.frame;
+        [self.statusBarBackgroundView addSubview:effectView];
+
+        effectView.translatesAutoresizingMaskIntoConstraints = false;
+
+        NSLayoutConstraint *widthConstraint = [NSLayoutConstraint constraintWithItem:effectView attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:self.statusBarBackgroundView attribute:NSLayoutAttributeWidth multiplier:1.0 constant:0];
+        NSLayoutConstraint *heightConstraint = [NSLayoutConstraint constraintWithItem:effectView attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:self.statusBarBackgroundView attribute:NSLayoutAttributeHeight multiplier:1.0 constant:0];
+
+        [self.statusBarBackgroundView addConstraint:widthConstraint];
+        [self.statusBarBackgroundView addConstraint:heightConstraint];
+    } else {
+        self.statusBarBackgroundView.subviews[1].backgroundColor = [UIColor colorWithRed:0.000 green:0.000 blue:0.000 alpha:0.702];
+    }
+}
+%end
+
+
+
+
+
+/*        Tab Bar        */
+
+@interface SPTNowPlayingBarContainerViewController : UIViewController
+@property (retain, nonatomic) UIView *backgroundView;
+@end
+
+%hook SPTNowPlayingBarContainerViewController
+- (void)viewDidLoad {
+    %orig;
+    tabNPEffectView = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleDark]];
+    tabNPEffectView.subviews[1].backgroundColor = [UIColor clearColor];
+    [self.backgroundView addSubview:tabNPEffectView];
+    self.backgroundView.backgroundColor = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"tabBarTint"], @"#282828");
+}
+%end
+
+@interface SPTNowPlayingBarContentView
+@end
+
+%hook SPTNowPlayingBarContentView
+- (void)setFrame:(CGRect)arg1 {
+    %orig;
+    tabNPEffectView.frame = CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, arg1.size.height);
+}
+%end
+
+%hook UITabBar
+- (void)didMoveToWindow {
+    bool alreadyEnabled = false;
+    for (int i = 0; i < self.subviews.count; i++) {
+        if ([self.subviews[i] isKindOfClass:[UIVisualEffectView class]]) {
+            alreadyEnabled = true;
+        }
+    }
+    if (!alreadyEnabled) {
+        UIView *effectView = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleDark]];
+        effectView.subviews[1].backgroundColor = [UIColor clearColor];
+        [self addSubview:effectView];
+        effectView.frame = CGRectMake(0, 0, self.frame.size.width, self.frame.size.height);
+    }
+    %orig;
+}
+%end
+
+@interface _UIBarBackground : UIView
+@end
+
+%hook _UIBarBackground
+- (void)setBackgroundColor:(id)arg1 {
+    if ([self.superview isKindOfClass:[UITabBar class]]) {
+        arg1 = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"tabBarTint"], @"#282828");
+    }
+    %orig;
+}
+%end
+
+
+
+
+
+/*        Selected Colours        */
 
 @interface UIView ()
 + (UIColor *)readableForegroundColorForBackgroundColor:(UIColor *)backgroundColor;
@@ -369,3 +511,72 @@ static UIView *tabNPEffectView;
     %orig;
 }
 %end
+
+
+
+
+
+/*        Now Playing Transition Animation        */
+
+@interface UITransitionView : UIView
+@end
+@interface SPTMainWindow : UIView
+@end
+@interface _UIReplicantView : UIView
+@end
+@interface SPTNowPlayingToggleViewController : UIViewController
+@end
+
+%hook UITransitionView
+- (void)addSubview:arg1 {
+    if ([self.superview isKindOfClass:[%c(SPTMainWindow) class]]) {
+        if (((UIView *)arg1).subviews.count == 0) {
+            return;
+        } else if ([[arg1 spt_viewController] isKindOfClass:[%c(SPTNowPlayingToggleViewController) class]]) {
+            ((UIView *)arg1).alpha = 1;
+        }
+    }
+    %orig;
+}
+%end
+
+
+static CGFloat npViewY;
+
+%hook UIView
+- (void)setFrame:(CGRect)arg1 {
+    %orig;
+    if ([[self spt_viewController] isKindOfClass:[%c(SPTNowPlayingToggleViewController) class]]) {
+        if (!npViewY) {
+                npViewY = self.frame.origin.y;
+        } else if (self.frame.origin.y != 0) {
+            self.alpha = 4 * (1 - self.frame.origin.y / npViewY);
+        }
+    }
+}
+%end
+
+
+
+
+
+/*        SPTActionButton Background        */
+
+@interface SPTActionButton : UIView
+@end
+
+%hook SPTActionButton
+- (void)setBackgroundColor:(UIColor *)arg1 {
+    arg1 = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"tabBarTint"], @"#282828");
+    %orig;
+}
+%end
+
+
+/*
+
+Todo:
+
+- Add extra space to bottom of scroll views
+
+*/
