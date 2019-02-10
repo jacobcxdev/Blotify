@@ -33,8 +33,14 @@
     FRPLinkCell *navigationBarBackground = [FRPLinkCell cellWithTitle:@"Navigation Bar Background" selectedBlock:^(id sender) { [self showLPCForKey:@"navigationBarBackground" withFallback:@"1c1c1c" showAlpha:YES]; }]; [primaryColours addCell:navigationBarBackground];
     FRPLinkCell *primaryBackground = [FRPLinkCell cellWithTitle:@"Background" selectedBlock:^(id sender) { [self showLPCForKey:@"primaryBackground" withFallback:@"#121212" showAlpha:NO]; }]; [primaryColours addCell:primaryBackground];
     FRPLinkCell *tabBarTint = [FRPLinkCell cellWithTitle:@"Tab Bar Tint" selectedBlock:^(id sender) { [self showLPCForKey:@"tabBarTint" withFallback:@"#282828" showAlpha:YES]; }]; [primaryColours addCell:tabBarTint];
+    FRPLinkCell *spotifyTint = [FRPLinkCell cellWithTitle:@"Spotify Tint" selectedBlock:^(id sender) { [self showLPCForKey:@"spotifyTint" withFallback:@"#1db954" showAlpha:NO]; }]; [primaryColours addCell:spotifyTint];
+    FRPLinkCell *mainTint = [FRPLinkCell cellWithTitle:@"Main Tint" selectedBlock:^(id sender) { [self showLPCForKey:@"mainTint" withFallback:@"#ffffff" showAlpha:NO]; }]; [primaryColours addCell:mainTint];
+    FRPLinkCell *secondaryTint = [FRPLinkCell cellWithTitle:@"Secondary Tint" selectedBlock:^(id sender) { [self showLPCForKey:@"secondaryTint" withFallback:@"#b3b3b3" showAlpha:NO]; }]; [primaryColours addCell:secondaryTint];
 
-    FRPreferences *table = [FRPreferences tableWithSections:@[primaryColours] title:@"ColorifyXI" tintColor:nil];
+    FRPSection *geniusColours = [FRPSection sectionWithTitle:@"Genius Colours" footer:nil];
+    FRPLinkCell *geniusCardHighlight = [FRPLinkCell cellWithTitle:@"Highlight Colour" selectedBlock:^(id sender) { [self showLPCForKey:@"geniusCardHighlight" withFallback:@"#ffff64" showAlpha:NO]; }]; [geniusColours addCell:geniusCardHighlight];
+
+    FRPreferences *table = [FRPreferences tableWithSections:@[primaryColours, geniusColours] title:@"ColorifyXI" tintColor:nil];
     [self.navigationController pushViewController:table animated:YES];
 }
 %new
@@ -72,7 +78,11 @@ static UIView *tabNPEffectView;
 
 @interface SPTTheme
 + (id)binaryThemeWithPlist:(id)arg1;
-+ (id)hex9WithPlistKey:(id)plistKey forKey:(id)key withFallback:(id)fallback;
++ (id)hexWithKey:(id)key withFallback:(id)fallback;
++ (id)hex9WithKey:(id)key withFallback:(id)fallback;
++ (id)hex9WithColor:(UIColor *)color;
++ (UIColor *)lighterColorForColor:(UIColor *)c;
++ (UIColor *)darkerColorForColor:(UIColor *)c;
 @end
 
 
@@ -81,22 +91,62 @@ static UIView *tabNPEffectView;
     NSString *plistPath = [[NSBundle mainBundle] pathForResource:@"Theme" ofType:@"plist"];
     NSMutableDictionary *plist = [[NSMutableDictionary alloc] initWithContentsOfFile:plistPath];
 
-    plist[@"colors"][@"glueGray7Color"][@""] = [self hex9WithPlistKey:plist[@"colors"][@"glueGray7Color"][@""] forKey:@"primaryBackground" withFallback:@"#121212"];
-    plist[@"colors"][@"glueGray15Color"][@""] = [self hex9WithPlistKey:plist[@"colors"][@"glueGray15Color"][@""] forKey:@"tabBarTint" withFallback:@"#282828"];
+    plist[@"colors"][@"glueGray7Color"][@""] = [self hex9WithKey:@"primaryBackground" withFallback:@"#121212"];
+    plist[@"colors"][@"glueGray15Color"][@""] = [self hex9WithKey:@"tabBarTint" withFallback:@"#282828"];
+    plist[@"colors"][@"glueGreenColor"][@""] = [self hex9WithKey:@"spotifyTint" withFallback:@"#1db954"];
+    plist[@"colors"][@"glueGreenDarkColor"][@""] = [self hex9WithColor:[self darkerColorForColor:LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"spotifyTint"], @"#1db954")]];
+    plist[@"colors"][@"glueGreenLightColor"][@""] = [self hex9WithColor:[self lighterColorForColor:LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"spotifyTint"], @"#1db954")]];
+    plist[@"colors"][@"glueWhiteColor"][@""] = [self hex9WithKey:@"mainTint" withFallback:@"#ffffff"];
+    plist[@"colors"][@"glueGray70Color"][@""] = [self hex9WithKey:@"secondaryTint" withFallback:@"#b3b3b3"];
+    
+    plist[@"colors"][@"geniusCardContentsHighlightColor"][@""] = [self hex9WithKey:@"geniusCardHighlight" withFallback:@"#ffff64"];
+    plist[@"colors"][@"geniusNowPlayingViewContentsHighlightColor"][@""] = [self hex9WithKey:@"geniusCardHighlight" withFallback:@"#ffff64"];
+    plist[@"colors"][@"geniusNowPlayingViewVerifiedArtistNameColor"][@""] = [self hex9WithKey:@"geniusCardHighlight" withFallback:@"#ffff64"];
 
     arg1 = plist;
     return %orig;
 }
 
 %new
-+ (id)hex9WithPlistKey:(id)plistKey forKey:(id)key withFallback:(id)fallback {
++ (id)hexWithKey:(id)key withFallback:(id)fallback {
     if (![[NSUserDefaults standardUserDefaults] objectForKey:key]) {
         [[NSUserDefaults standardUserDefaults] setObject:fallback forKey:key];
     }
     UIColor *pickedColor = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:key], fallback);
     NSString *hexString = [UIColor hexFromColor:pickedColor];
-    plistKey = [hexString stringByAppendingString:[NSString stringWithFormat:@"%lX", (unsigned long)pickedColor.alpha * 255]];
-    return plistKey;
+    return hexString;
+}
+%new
++ (id)hex9WithKey:(id)key withFallback:(id)fallback {
+    if (![[NSUserDefaults standardUserDefaults] objectForKey:key]) {
+        [[NSUserDefaults standardUserDefaults] setObject:fallback forKey:key];
+    }
+    UIColor *pickedColor = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:key], fallback);
+    NSString *hexString = [UIColor hexFromColor:pickedColor];
+    hexString = [hexString stringByAppendingString:[NSString stringWithFormat:@"%lX", (unsigned long)pickedColor.alpha * 255]];
+    return hexString;
+}
+%new
++ (id)hex9WithColor:(UIColor *)color {
+    NSString *hexString = [UIColor hexFromColor:color];
+    hexString = [hexString stringByAppendingString:[NSString stringWithFormat:@"%lX", (unsigned long)color.alpha * 255]];
+    return hexString;
+}
+%new
++ (UIColor *)lighterColorForColor:(UIColor *)c {
+    CGFloat r, g, b, a;
+    if ([c getRed:&r green:&g blue:&b alpha:&a]) {
+        return [UIColor colorWithRed:MIN(r + 0.2, 1.0) green:MIN(g + 0.2, 1.0) blue:MIN(b + 0.2, 1.0) alpha:a];
+    }
+    return nil;
+}
+%new
++ (UIColor *)darkerColorForColor:(UIColor *)c {
+    CGFloat r, g, b, a;
+    if ([c getRed:&r green:&g blue:&b alpha:&a]) {
+        return [UIColor colorWithRed:MAX(r - 0.2, 0.0) green:MAX(g - 0.2, 0.0) blue:MAX(b - 0.2, 0.0) alpha:a];
+    }
+    return nil;
 }
 %end
 
@@ -106,12 +156,20 @@ static UIView *tabNPEffectView;
 
 /*        Screen Height        */
 
+static CGFloat tabFrameHeight; // Set by [UITabBar didMoveToWindow]
+
 @interface EXP_HUBCollectionView : UIView
 @property (nonatomic, assign, readwrite) CGPoint contentOffset;
 @end
+@interface EXP_HUBContainerView : UIView
+@end
 @interface SPTAsyncLoadingView : UIView
 @end
-@interface SPTTableView : UITableView
+@interface SPTTableView : UIView
+@end
+@interface PlaylistViewController : UIViewController
+@end
+@interface SPTCeramicVerticalCollectionView : UIView
 @end
 @interface SPTCollectionOverviewViewController : UIViewController
 @end
@@ -143,6 +201,33 @@ static UIView *tabNPEffectView;
 @end
 @interface SPTProfileViewAllViewController : UIViewController
 @end
+@interface SettingsViewController: UIViewController
+@end
+@interface SPTAccountSettingsViewController: UIViewController
+@end
+@interface SPTNotificationPreferencesViewController : UIViewController
+@end
+@interface SPTCampaignViewController : UIViewController
+@end
+@interface SPTAccountUpsellViewController : UIViewController
+@end
+@interface SPTFreeTierCollectionYourLibraryViewController : UIViewController
+@end
+@interface SPTFreeTierFindContainerViewController : UIViewController
+@end
+@interface SPTAlbumViewController : UIViewController
+@end
+@interface SPTProfileSocialRelationsViewController : UIViewController
+@end 
+@interface SPTArtistAboutViewController : UIViewController
+@end
+@interface SPTConcertsEntityViewController : UIViewController
+@end
+@interface SPTConcertsLocationSearchViewController : UIViewController
+- (id)tableView;
+@end
+@interface SPTFindFriendsVC : UIViewController
+@end
 
 %hook EXP_HUBCollectionView
 - (void)setContentOffset:(CGPoint)arg1 {
@@ -151,6 +236,13 @@ static UIView *tabNPEffectView;
     }
     %orig;
 }
+- (void)setContentInset:(UIEdgeInsets)arg1 {
+    arg1.bottom = tabFrameHeight + tabNPEffectView.frame.size.height;
+    %orig;
+}
+%end
+
+%hook EXP_HUBContainerView
 - (void)layoutSubviews {
     %orig;
     [self spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
@@ -170,6 +262,21 @@ static UIView *tabNPEffectView;
     if ([[self spt_viewController] isKindOfClass:[%c(SPTPodcastViewController) class]]) {
         [self spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
     }
+}
+- (void)setContentInset:(UIEdgeInsets)arg1 {
+    if ([[self spt_viewController] isKindOfClass:[%c(PlaylistViewController) class]]) {
+        arg1.bottom += tabFrameHeight;
+    } else {
+        arg1.bottom = tabFrameHeight + tabNPEffectView.frame.size.height;
+    }
+    %orig;
+}
+%end
+
+%hook SPTCeramicVerticalCollectionView
+- (void)setContentInset:(UIEdgeInsets)arg1 {
+    arg1.bottom = tabFrameHeight + tabNPEffectView.frame.size.height;
+    %orig;
 }
 %end
 
@@ -292,6 +399,117 @@ static UIView *tabNPEffectView;
 }
 %end
 
+%hook SettingsViewController
+- (void)viewDidLayoutSubviews {
+    %orig;
+    [self.view spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+}
+%end
+
+%hook SPTAccountSettingsViewController
+- (void)viewDidLayoutSubviews {
+    %orig;
+    [self.view spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+}
+%end
+
+%hook SPTNotificationPreferencesViewController
+- (void)viewDidLayoutSubviews {
+    %orig;
+    [self.view spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+}
+%end
+
+%hook SPTCampaignViewController
+- (void)viewDidLayoutSubviews {
+    %orig;
+    [self.view spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+}
+%end
+
+%hook SPTAccountUpsellViewController
+- (void)viewDidLayoutSubviews {
+    %orig;
+    [self.view spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+}
+%end
+
+%hook SPTFreeTierCollectionYourLibraryViewController
+- (void)viewDidLayoutSubviews {
+    %orig;
+    [self.view spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+}
+%end
+
+%hook SPTFreeTierFindContainerViewController
+- (void)viewDidLayoutSubviews {
+    %orig;
+    [self.view spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+}
+%end
+
+%hook SPTAlbumViewController
+- (void)viewDidLayoutSubviews {
+    %orig;
+    [self.view spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+}
+%end
+
+%hook SPTProfileSocialRelationsViewController
+- (void)viewDidLayoutSubviews {
+    %orig;
+    [self.view spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+}
+%end
+
+%hook SPTArtistAboutViewController
+- (void)viewDidLayoutSubviews {
+    %orig;
+    [self.view spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+}
+%end
+
+%hook SPTConcertsEntityViewController
+- (void)viewDidLayoutSubviews {
+    %orig;
+    [self.view spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+}
+%end
+
+%hook SPTConcertsLocationSearchViewController
+- (void)viewDidLayoutSubviews {
+    %orig;
+    [self.view spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+    [[self tableView] spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+}
+%end
+
+%hook SPTFindFriendsVC
+- (void)viewDidLayoutSubviews {
+    %orig;
+    [self.view spt_setFrameHeight:[UIScreen mainScreen].bounds.size.height];
+}
+%end
+
+
+
+
+
+/*        Launchscreen Background        */
+
+@interface SPTLaunchViewController : UIViewController
+@end
+
+%hook SPTLaunchViewController
+- (void)viewDidLoad {
+    %orig;
+    self.view.backgroundColor = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"primaryBackground"], @"#191414");
+    ((UIImageView *)self.view.subviews[0]).image = [((UIImageView *)self.view.subviews[0]).image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    [((UIImageView *)self.view.subviews[0]) setTintColor:LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"spotifyTint"], @"#1db954")];
+}
+%end
+
+
 
 
 
@@ -318,8 +536,6 @@ static UIView *tabNPEffectView;
         [self.backgroundContainerView addConstraint:widthConstraint];
         [self.backgroundContainerView addConstraint:heightConstraint];
         self.navigationBarBackgroundView.subviews[1].backgroundColor = [UIColor clearColor];
-    } else {
-        self.navigationBarBackgroundView.subviews[1].backgroundColor = [UIColor colorWithRed:0.000 green:0.000 blue:0.000 alpha:0.702];
     }
 }
 %end
@@ -347,8 +563,51 @@ static UIView *tabNPEffectView;
 
         [self.statusBarBackgroundView addConstraint:widthConstraint];
         [self.statusBarBackgroundView addConstraint:heightConstraint];
-    } else {
-        self.statusBarBackgroundView.subviews[1].backgroundColor = [UIColor colorWithRed:0.000 green:0.000 blue:0.000 alpha:0.702];
+    }
+}
+%end
+
+
+@interface SPTStatusBarBackgroundAutoResizeView : UIView
+@end
+
+%hook SPTStatusBarBackgroundAutoResizeView
+- (void)didMoveToWindow {
+    %orig;
+    if (![[[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"] isEqual:@"1c1c1c"] || ![[[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"] isEqual:@"1C1C1C"]) {
+        self.backgroundColor = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"], @"#000000");
+
+        UIView *effectView = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleDark]];
+        effectView.subviews[1].backgroundColor = [UIColor clearColor];
+        effectView.frame = self.frame;
+        [self addSubview:effectView];
+
+        effectView.translatesAutoresizingMaskIntoConstraints = false;
+
+        NSLayoutConstraint *widthConstraint = [NSLayoutConstraint constraintWithItem:effectView attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeWidth multiplier:1.0 constant:0];
+        NSLayoutConstraint *heightConstraint = [NSLayoutConstraint constraintWithItem:effectView attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeHeight multiplier:1.0 constant:0];
+
+        [self addConstraint:widthConstraint];
+        [self addConstraint:heightConstraint];
+    }
+}
+- (void)setBackgroundColor:(id)arg1 {
+    if (![[[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"] isEqual:@"1c1c1c"] || ![[[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"] isEqual:@"1C1C1C"]) {
+        arg1 = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"], @"#000000");
+    }
+}
+%end
+
+
+@interface SPTEntityHeaderBackgroundImageView : UIView
+@property (retain, nonatomic) UIImageView *blurImageView;
+@end
+
+%hook SPTEntityHeaderBackgroundImageView
+- (void)didMoveToWindow {
+    %orig;
+    if (![[[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"] isEqual:@"1c1c1c"] || ![[[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"] isEqual:@"1C1C1C"]) {
+        self.blurImageView.subviews[2].backgroundColor = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"], @"#000000");
     }
 }
 %end
@@ -398,6 +657,7 @@ static UIView *tabNPEffectView;
         effectView.frame = CGRectMake(0, 0, self.frame.size.width, self.frame.size.height);
     }
     %orig;
+    tabFrameHeight = self.frame.size.height;
 }
 %end
 
@@ -573,10 +833,39 @@ static CGFloat npViewY;
 %end
 
 
-/*
 
-Todo:
 
-- Add extra space to bottom of scroll views
 
-*/
+/*        Search Bar Button Background        */
+
+@interface SPTFreeTierFindHeaderView : UIView
+@end
+
+%hook UIButton
+- (void)layoutSubviews {
+    %orig;
+    if ([self.superview isKindOfClass:[%c(SPTFreeTierFindHeaderView) class]]) {
+        self.backgroundColor = [UIColor whiteColor];
+    }
+}
+%end
+
+
+
+
+
+/*        Category Label Text Colour Fix        */
+
+@interface GLUELabel : UILabel
+@end
+@interface SPTBrowseUICategoryCardComponentView : UIView
+@end
+
+%hook GLUELabel
+- (void)layoutSubviews {
+    %orig;
+    if ([self.superview isKindOfClass:[%c(SPTBrowseUICategoryCardComponentView) class]]) {
+        self.textColor = [UIColor whiteColor];
+    }
+}
+%end

@@ -1,0 +1,9 @@
+Package: com.jacobcxdev.colorifyxi
+Name: ColorifyXI
+Depends: mobilesubstrate, libcolorpicker
+Version: 0.0.1
+Architecture: iphoneos-arm
+Description: Spotify UI Customiser
+Maintainer: JacobCXDev <jacobcxdev@gmail.com>
+Author: JacobCXDev <jacobcxdev@gmail.com>
+Section: Tweaks

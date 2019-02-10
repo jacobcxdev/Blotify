@@ -38,7 +38,7 @@
         self.clipsToBounds = YES;
         self.textLabel.text = title;
         self.textLabel.font = [UIFont fontWithName:@"CircularSpUI-Book" size:13];
-        self.textLabel.textColor = [UIColor whiteColor];
+        self.textLabel.textColor = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"mainTint"], @"#ffffff");
         self.backgroundColor = [UIColor clearColor];
         self.setting = setting;
 
