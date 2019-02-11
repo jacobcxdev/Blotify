@@ -869,3 +869,60 @@ static CGFloat npViewY;
     }
 }
 %end
+
+
+
+
+
+/*        ColorifyXI Settings Tab Bar Crash Fix        */
+
+@interface SPTTabBarController : UITabBarController
+- (id)spt_tabBar;
+@end
+@interface SPTBarAttachmentContainerViewController : UIViewController
+@end
+
+static UITabBar *tabBar;
+static UIView *tBarAttachment;
+
+%hook SPTTabBarController
+- (void)viewDidLoad {
+    %orig;
+    tabBar = (UITabBar *)[self spt_tabBar];
+}
+%end
+
+%hook SPTBarAttachmentContainerViewController
+- (void)viewDidLoad {
+    %orig;
+    tBarAttachment = self.view;
+}
+%end
+
+%hook FRPreferences
+- (void)viewWillAppear:(BOOL)arg1 {
+    %orig;
+    for (UITabBarItem *item in tabBar.items) {
+        [item setEnabled:false];
+    }
+    [UIView animateWithDuration:0.2 delay:0 options:UIViewAnimationOptionCurveLinear  animations:^{
+        tabBar.alpha = 0;
+        tBarAttachment.alpha = 0;
+    } completion:^(BOOL finished) {
+        tabBar.hidden = true;
+        tBarAttachment.hidden = true;
+    }];
+}
+- (void)viewWillDisappear:(BOOL)arg1 {
+    %orig;
+    for (UITabBarItem *item in tabBar.items) {
+        [item setEnabled:true];
+    }
+    tabBar.hidden = false;
+    tBarAttachment.hidden = false;
+    [UIView animateWithDuration:0.2 delay:0 options:UIViewAnimationOptionCurveLinear  animations:^{
+        tabBar.alpha = 1;
+        tBarAttachment.alpha = 1;
+    } completion:nil];
+}
+%end
