@@ -1,5 +1,5 @@
-Package: com.jacobcxdev.colorifyxi
-Name: ColorifyXI
+Package: com.jacobcxdev.Blotify
+Name: Blotify
 Depends: mobilesubstrate, libcolorpicker
 Version: 0.0.1
 Architecture: iphoneos-arm

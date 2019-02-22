@@ -18,7 +18,7 @@
 
 -(void)viewDidLoad {
     %orig;
-    UIBarButtonItem *addButton = [[UIBarButtonItem alloc] initWithTitle:@"ColorifyXI" style:UIBarButtonItemStylePlain target:self action:@selector(loadNewSettings:)];
+    UIBarButtonItem *addButton = [[UIBarButtonItem alloc] initWithTitle:@"Blotify" style:UIBarButtonItemStylePlain target:self action:@selector(loadNewSettings:)];
     [self.navigationItem setRightBarButtonItem:addButton];
 }
 
@@ -40,7 +40,7 @@
     FRPSection *geniusColours = [FRPSection sectionWithTitle:@"Genius Colours" footer:nil];
     FRPLinkCell *geniusCardHighlight = [FRPLinkCell cellWithTitle:@"Highlight Colour" selectedBlock:^(id sender) { [self showLPCForKey:@"geniusCardHighlight" withFallback:@"#ffff64" showAlpha:NO]; }]; [geniusColours addCell:geniusCardHighlight];
 
-    FRPreferences *table = [FRPreferences tableWithSections:@[primaryColours, geniusColours] title:@"ColorifyXI" tintColor:nil];
+    FRPreferences *table = [FRPreferences tableWithSections:@[primaryColours, geniusColours] title:@"Blotify" tintColor:nil];
     [self.navigationController pushViewController:table animated:YES];
 }
 %new
@@ -874,7 +874,7 @@ static CGFloat npViewY;
 
 
 
-/*        ColorifyXI Settings Tab Bar Crash Fix        */
+/*        Blotify Settings Tab Bar Crash Fix        */
 
 @interface SPTTabBarController : UITabBarController
 - (id)spt_tabBar;

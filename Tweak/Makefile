@@ -1,8 +1,8 @@
 include $(THEOS)/makefiles/common.mk
 
-TWEAK_NAME = ColorifyXI
-ColorifyXI_FILES = Tweak.xm $(wildcard FRPreferences/*.m)
-ColorifyXI_LIBRARIES = colorpicker
+TWEAK_NAME = Blotify
+Blotify_FILES = Tweak.xm $(wildcard FRPreferences/*.m)
+Blotify_LIBRARIES = colorpicker
 
 include $(THEOS_MAKE_PATH)/tweak.mk
 

@@ -1,15 +1,15 @@
 MODULES = jailed
-#FINALPACKAGE = 1
+FINALPACKAGE = 1
 include $(THEOS)/makefiles/common.mk
 
-TWEAK_NAME = ColorifyXI
-DISPLAY_NAME = ColorifyXI
-BUNDLE_ID = com.jacobcxdev.colorifyxi
+TWEAK_NAME = Blotify
+DISPLAY_NAME = Blotify
+BUNDLE_ID = com.jacobcxdev.blotify
 
-ColorifyXI_FILES = Tweak.xm $(wildcard FRPreferences/*.m)
-ColorifyXI_IPA = Spotify-v8.4.92.ipa
-ColorifyXI_CFLAGS = -fobjc-arc
-ColorifyXI_USE_FLEX = 1
-ColorifyXI_EMBED_LIBRARIES = Resources/Frameworks/libcolorpicker.dylib
+Blotify_FILES = Tweak.xm $(wildcard FRPreferences/*.m)
+Blotify_IPA = Spotify-v8.4.94.ipa
+Blotify_CFLAGS = -fobjc-arc
+#Blotify_USE_FLEX = 1
+Blotify_EMBED_LIBRARIES = Resources/Frameworks/libcolorpicker.dylib
 
 include $(THEOS_MAKE_PATH)/tweak.mk
