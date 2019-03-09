@@ -723,11 +723,12 @@ static CGFloat tabFrameHeight; // Set by [UITabBar didMoveToWindow]
 
 
 @interface GLUEEntityRowView : UIView
+-(BOOL)isHighlighted;
 @end
 
 %hook GLUEEntityRowView
 - (void)setBackgroundColor:(id)arg1 {
-    if ([arg1 isEqual:[UIColor colorWithRed:0.000 green:0.000 blue:0.000 alpha:1.000]]) {
+    if ([arg1 isEqual:[UIColor colorWithRed:0.000 green:0.000 blue:0.000 alpha:1.000]] && [self isHighlighted]) {
         if ([[UIView readableForegroundColorForBackgroundColor:(UIColor *)LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"primaryBackground"], @"#121212")] isEqual:[UIColor blackColor]]) {
               arg1 = [UIColor colorWithRed:0.000 green:0.000 blue:0.000 alpha:0.100];
            } else {
@@ -786,10 +787,12 @@ static CGFloat tabFrameHeight; // Set by [UITabBar didMoveToWindow]
 @end
 @interface SPTNowPlayingToggleViewController : UIViewController
 @end
+@interface SPTVoiceSessionViewController : UIViewController
+@end
 
 %hook UITransitionView
 - (void)addSubview:arg1 {
-    if ([self.superview isKindOfClass:[%c(SPTMainWindow) class]]) {
+    if ([self.superview isKindOfClass:[%c(SPTMainWindow) class]] && ![[arg1 spt_viewController] isKindOfClass:[%c(SPTVoiceSessionViewController) class]]) {
         if (((UIView *)arg1).subviews.count == 0) {
             return;
         } else if ([[arg1 spt_viewController] isKindOfClass:[%c(SPTNowPlayingToggleViewController) class]]) {
@@ -829,24 +832,6 @@ static CGFloat npViewY;
 - (void)setBackgroundColor:(UIColor *)arg1 {
     arg1 = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"tabBarTint"], @"#282828");
     %orig;
-}
-%end
-
-
-
-
-
-/*        Search Bar Button Background        */
-
-@interface SPTFreeTierFindHeaderView : UIView
-@end
-
-%hook UIButton
-- (void)layoutSubviews {
-    %orig;
-    if ([self.superview isKindOfClass:[%c(SPTFreeTierFindHeaderView) class]]) {
-        self.backgroundColor = [UIColor whiteColor];
-    }
 }
 %end
 
