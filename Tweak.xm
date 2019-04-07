@@ -49,6 +49,8 @@
 
     FRPSection *importExport = [FRPSection sectionWithTitle:@"Import/Export" footer:nil];
     FRPLinkCell *im = [FRPLinkCell cellWithTitle:@"Import" selectedBlock:^(id sender) {
+
+        // Import instructions should be displayed in a UIAlert. Blotify needs to be added to the share sheet for plists so that importing can actually take place.
     
         UIDocumentPickerViewController *importMenu = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[@"com.apple.property-list"] inMode:UIDocumentPickerModeImport];
 
