@@ -38,13 +38,13 @@
         self.clipsToBounds = YES;
         self.textLabel.text = title;
         self.textLabel.font = [UIFont fontWithName:@"CircularSpUI-Book" size:13];
-        self.textLabel.textColor = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"mainTint"], @"#ffffff");
+        self.textLabel.textColor = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"BlotifyPrefsMainTint"], @"#ffffff");
         self.backgroundColor = [UIColor clearColor];
         self.setting = setting;
 
         UIView *bgColorView = [[UIView alloc] init];
 
-        if ([[self readableForegroundColorForBackgroundColor:(UIColor *)LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"primaryBackground"], @"#121212")] isEqual:[UIColor blackColor]]) {
+        if ([[self readableForegroundColorForBackgroundColor:(UIColor *)LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"BlotifyPrefsPrimaryBackground"], @"#121212")] isEqual:[UIColor blackColor]]) {
             bgColorView.backgroundColor = [UIColor colorWithRed:0.000 green:0.000 blue:0.000 alpha:0.100];
         } else {
             bgColorView.backgroundColor = [UIColor colorWithRed:1.000 green:1.000 blue:1.000 alpha:0.100];

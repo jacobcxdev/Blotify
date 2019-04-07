@@ -10,16 +10,24 @@
 
 /*          Preferences Button          */
 
-@interface RootSettingsViewController : UIViewController
+@interface RootSettingsViewController : UIViewController <UIDocumentPickerDelegate>
 - (void)showLPCForKey:(id)key withFallback:(id)fallback showAlpha:(bool)alpha;
 @end
 
 %hook RootSettingsViewController
 
--(void)viewDidLoad {
+- (void)viewDidLoad {
     %orig;
     UIBarButtonItem *addButton = [[UIBarButtonItem alloc] initWithTitle:@"Blotify" style:UIBarButtonItemStylePlain target:self action:@selector(loadNewSettings:)];
     [self.navigationItem setRightBarButtonItem:addButton];
+}
+
+%new
+- (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
+    NSMutableDictionary *plist = [[[NSDictionary alloc] initWithContentsOfFile:[[urls firstObject]path]] mutableCopy];
+    for (NSString *key in plist) {
+        [[NSUserDefaults standardUserDefaults] setObject:plist[key] forKey:key];
+    }
 }
 
 
@@ -29,18 +37,55 @@
 %new
 - (void)loadNewSettings:(id)sender {
     FRPSection *primaryColours = [FRPSection sectionWithTitle:@"Primary Colours" footer:nil];
-
-    FRPLinkCell *navigationBarBackground = [FRPLinkCell cellWithTitle:@"Navigation Bar Background" selectedBlock:^(id sender) { [self showLPCForKey:@"navigationBarBackground" withFallback:@"1c1c1c" showAlpha:YES]; }]; [primaryColours addCell:navigationBarBackground];
-    FRPLinkCell *primaryBackground = [FRPLinkCell cellWithTitle:@"Background" selectedBlock:^(id sender) { [self showLPCForKey:@"primaryBackground" withFallback:@"#121212" showAlpha:NO]; }]; [primaryColours addCell:primaryBackground];
-    FRPLinkCell *tabBarTint = [FRPLinkCell cellWithTitle:@"Tab Bar Tint" selectedBlock:^(id sender) { [self showLPCForKey:@"tabBarTint" withFallback:@"#282828" showAlpha:YES]; }]; [primaryColours addCell:tabBarTint];
-    FRPLinkCell *spotifyTint = [FRPLinkCell cellWithTitle:@"Spotify Tint" selectedBlock:^(id sender) { [self showLPCForKey:@"spotifyTint" withFallback:@"#1db954" showAlpha:NO]; }]; [primaryColours addCell:spotifyTint];
-    FRPLinkCell *mainTint = [FRPLinkCell cellWithTitle:@"Main Tint" selectedBlock:^(id sender) { [self showLPCForKey:@"mainTint" withFallback:@"#ffffff" showAlpha:NO]; }]; [primaryColours addCell:mainTint];
-    FRPLinkCell *secondaryTint = [FRPLinkCell cellWithTitle:@"Secondary Tint" selectedBlock:^(id sender) { [self showLPCForKey:@"secondaryTint" withFallback:@"#b3b3b3" showAlpha:NO]; }]; [primaryColours addCell:secondaryTint];
+    FRPLinkCell *navigationBarBackground = [FRPLinkCell cellWithTitle:@"Navigation Bar Background" selectedBlock:^(id sender) { [self showLPCForKey:@"BlotifyPrefsNavigationBarBackground" withFallback:@"1c1c1c" showAlpha:YES]; }]; [primaryColours addCell:navigationBarBackground];
+    FRPLinkCell *primaryBackground = [FRPLinkCell cellWithTitle:@"Background" selectedBlock:^(id sender) { [self showLPCForKey:@"BlotifyPrefsPrimaryBackground" withFallback:@"#121212" showAlpha:NO]; }]; [primaryColours addCell:primaryBackground];
+    FRPLinkCell *tabBarTint = [FRPLinkCell cellWithTitle:@"Tab Bar Tint" selectedBlock:^(id sender) { [self showLPCForKey:@"BlotifyPrefsTabBarTint" withFallback:@"#282828" showAlpha:YES]; }]; [primaryColours addCell:tabBarTint];
+    FRPLinkCell *spotifyTint = [FRPLinkCell cellWithTitle:@"Spotify Tint" selectedBlock:^(id sender) { [self showLPCForKey:@"BlotifyPrefsSpotifyTint" withFallback:@"#1db954" showAlpha:NO]; }]; [primaryColours addCell:spotifyTint];
+    FRPLinkCell *mainTint = [FRPLinkCell cellWithTitle:@"Main Tint" selectedBlock:^(id sender) { [self showLPCForKey:@"BlotifyPrefsMainTint" withFallback:@"#ffffff" showAlpha:NO]; }]; [primaryColours addCell:mainTint];
+    FRPLinkCell *secondaryTint = [FRPLinkCell cellWithTitle:@"Secondary Tint" selectedBlock:^(id sender) { [self showLPCForKey:@"BlotifyPrefsSecondaryTint" withFallback:@"#b3b3b3" showAlpha:NO]; }]; [primaryColours addCell:secondaryTint];
 
     FRPSection *geniusColours = [FRPSection sectionWithTitle:@"Genius Colours" footer:nil];
-    FRPLinkCell *geniusCardHighlight = [FRPLinkCell cellWithTitle:@"Highlight Colour" selectedBlock:^(id sender) { [self showLPCForKey:@"geniusCardHighlight" withFallback:@"#ffff64" showAlpha:NO]; }]; [geniusColours addCell:geniusCardHighlight];
+    FRPLinkCell *geniusCardHighlight = [FRPLinkCell cellWithTitle:@"Highlight Colour" selectedBlock:^(id sender) { [self showLPCForKey:@"BlotifyPrefsGeniusCardHighlight" withFallback:@"#ffff64" showAlpha:NO]; }]; [geniusColours addCell:geniusCardHighlight];
 
-    FRPreferences *table = [FRPreferences tableWithSections:@[primaryColours, geniusColours] title:@"Blotify" tintColor:nil];
+    FRPSection *importExport = [FRPSection sectionWithTitle:@"Import/Export" footer:nil];
+    FRPLinkCell *im = [FRPLinkCell cellWithTitle:@"Import" selectedBlock:^(id sender) {
+    
+        UIDocumentPickerViewController *importMenu = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[@"com.apple.property-list"] inMode:UIDocumentPickerModeImport];
+
+        importMenu.delegate = self;
+        [self presentViewController:importMenu animated:true completion:nil];
+
+    }]; [importExport addCell:im];
+    FRPLinkCell *ex = [FRPLinkCell cellWithTitle:@"Export" selectedBlock:^(id sender) {
+
+        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, true);
+        NSString *documentsDirectory = [paths objectAtIndex:0];
+        NSString *exportPath = [documentsDirectory stringByAppendingString:@"/exportSettings.plist"];
+
+        NSMutableDictionary *dictRep = [[[NSUserDefaults standardUserDefaults] dictionaryRepresentation] mutableCopy];
+        NSMutableArray *remKeys = [[NSMutableArray alloc] init];
+        for (NSString *key in dictRep) {
+            if (![key containsString:@"BlotifyPrefs"]) {
+                [remKeys addObject:key];
+            }
+        }
+        for (NSString *key in remKeys) {
+            [dictRep removeObjectForKey:key];
+        }
+
+        [dictRep writeToFile:exportPath atomically:true];
+        NSArray *activityItems = @[[NSURL fileURLWithPath:exportPath]];
+        UIActivityViewController *activityViewControntroller = [[UIActivityViewController alloc] initWithActivityItems:activityItems applicationActivities:nil];
+        activityViewControntroller.excludedActivityTypes = @[];
+        if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+            activityViewControntroller.popoverPresentationController.sourceView = self.view;
+            activityViewControntroller.popoverPresentationController.sourceRect = CGRectMake(self.view.bounds.size.width/2, self.view.bounds.size.height/4, 0, 0);
+        }
+        [self presentViewController:activityViewControntroller animated:true completion:nil];
+
+    }]; [importExport addCell:ex];
+
+    FRPreferences *table = [FRPreferences tableWithSections:@[primaryColours, geniusColours, importExport] title:@"Blotify" tintColor:nil];
     [self.navigationController pushViewController:table animated:YES];
 }
 %new
@@ -91,17 +136,17 @@ static UIView *tabNPEffectView;
     NSString *plistPath = [[NSBundle mainBundle] pathForResource:@"Theme" ofType:@"plist"];
     NSMutableDictionary *plist = [[NSMutableDictionary alloc] initWithContentsOfFile:plistPath];
 
-    plist[@"colors"][@"glueGray7Color"][@""] = [self hex9WithKey:@"primaryBackground" withFallback:@"#121212"];
-    plist[@"colors"][@"glueGray15Color"][@""] = [self hex9WithKey:@"tabBarTint" withFallback:@"#282828"];
-    plist[@"colors"][@"glueGreenColor"][@""] = [self hex9WithKey:@"spotifyTint" withFallback:@"#1db954"];
-    plist[@"colors"][@"glueGreenDarkColor"][@""] = [self hex9WithColor:[self darkerColorForColor:LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"spotifyTint"], @"#1db954")]];
-    plist[@"colors"][@"glueGreenLightColor"][@""] = [self hex9WithColor:[self lighterColorForColor:LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"spotifyTint"], @"#1db954")]];
-    plist[@"colors"][@"glueWhiteColor"][@""] = [self hex9WithKey:@"mainTint" withFallback:@"#ffffff"];
-    plist[@"colors"][@"glueGray70Color"][@""] = [self hex9WithKey:@"secondaryTint" withFallback:@"#b3b3b3"];
+    plist[@"colors"][@"glueGray7Color"][@""] = [self hex9WithKey:@"BlotifyPrefsPrimaryBackground" withFallback:@"#121212"];
+    plist[@"colors"][@"glueGray15Color"][@""] = [self hex9WithKey:@"BlotifyPrefsTabBarTint" withFallback:@"#282828"];
+    plist[@"colors"][@"glueGreenColor"][@""] = [self hex9WithKey:@"BlotifyPrefsSpotifyTint" withFallback:@"#1db954"];
+    plist[@"colors"][@"glueGreenDarkColor"][@""] = [self hex9WithColor:[self darkerColorForColor:LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"BlotifyPrefsSpotifyTint"], @"#1db954")]];
+    plist[@"colors"][@"glueGreenLightColor"][@""] = [self hex9WithColor:[self lighterColorForColor:LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"BlotifyPrefsSpotifyTint"], @"#1db954")]];
+    plist[@"colors"][@"glueWhiteColor"][@""] = [self hex9WithKey:@"BlotifyPrefsMainTint" withFallback:@"#ffffff"];
+    plist[@"colors"][@"glueGray70Color"][@""] = [self hex9WithKey:@"BlotifyPrefsSecondaryTint" withFallback:@"#b3b3b3"];
     
-    plist[@"colors"][@"geniusCardContentsHighlightColor"][@""] = [self hex9WithKey:@"geniusCardHighlight" withFallback:@"#ffff64"];
-    plist[@"colors"][@"geniusNowPlayingViewContentsHighlightColor"][@""] = [self hex9WithKey:@"geniusCardHighlight" withFallback:@"#ffff64"];
-    plist[@"colors"][@"geniusNowPlayingViewVerifiedArtistNameColor"][@""] = [self hex9WithKey:@"geniusCardHighlight" withFallback:@"#ffff64"];
+    plist[@"colors"][@"geniusCardContentsHighlightColor"][@""] = [self hex9WithKey:@"BlotifyPrefsGeniusCardHighlight" withFallback:@"#ffff64"];
+    plist[@"colors"][@"geniusNowPlayingViewContentsHighlightColor"][@""] = [self hex9WithKey:@"BlotifyPrefsGeniusCardHighlight" withFallback:@"#ffff64"];
+    plist[@"colors"][@"geniusNowPlayingViewVerifiedArtistNameColor"][@""] = [self hex9WithKey:@"BlotifyPrefsGeniusCardHighlight" withFallback:@"#ffff64"];
 
     arg1 = plist;
     return %orig;
@@ -503,9 +548,9 @@ static CGFloat tabFrameHeight; // Set by [UITabBar didMoveToWindow]
 %hook SPTLaunchViewController
 - (void)viewDidLoad {
     %orig;
-    self.view.backgroundColor = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"primaryBackground"], @"#191414");
+    self.view.backgroundColor = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"BlotifyPrefsPrimaryBackground"], @"#191414");
     ((UIImageView *)self.view.subviews[0]).image = [((UIImageView *)self.view.subviews[0]).image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-    [((UIImageView *)self.view.subviews[0]) setTintColor:LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"spotifyTint"], @"#1db954")];
+    [((UIImageView *)self.view.subviews[0]) setTintColor:LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"BlotifyPrefsSpotifyTint"], @"#1db954")];
 }
 %end
 
@@ -523,9 +568,9 @@ static CGFloat tabFrameHeight; // Set by [UITabBar didMoveToWindow]
 %hook SPNavigationController
 - (void)viewDidLoad {
     %orig;
-    if (![[[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"] isEqual:@"1c1c1c"] || ![[[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"] isEqual:@"1C1C1C"]) {
+    if (![[[NSUserDefaults standardUserDefaults] objectForKey:@"BlotifyPrefsNavigationBarBackground"] isEqual:@"1c1c1c"] || ![[[NSUserDefaults standardUserDefaults] objectForKey:@"BlotifyPrefsNavigationBarBackground"] isEqual:@"1C1C1C"]) {
         UIView *colouredView = [[UIView alloc] initWithFrame:self.navigationBarBackgroundView.frame];
-        colouredView.backgroundColor = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"], @"#1c1c1c");
+        colouredView.backgroundColor = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"BlotifyPrefsNavigationBarBackground"], @"#1c1c1c");
         [self.backgroundContainerView insertSubview:colouredView atIndex:0];
 
         colouredView.translatesAutoresizingMaskIntoConstraints = false;
@@ -548,8 +593,8 @@ static CGFloat tabFrameHeight; // Set by [UITabBar didMoveToWindow]
 %hook SPTHomeHubsRendererViewController
 - (void)viewDidLoad {
     %orig;
-    if (![[[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"] isEqual:@"1c1c1c"] || ![[[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"] isEqual:@"1C1C1C"]) {
-        self.statusBarBackgroundView.backgroundColor = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"], @"#000000");
+    if (![[[NSUserDefaults standardUserDefaults] objectForKey:@"BlotifyPrefsNavigationBarBackground"] isEqual:@"1c1c1c"] || ![[[NSUserDefaults standardUserDefaults] objectForKey:@"BlotifyPrefsNavigationBarBackground"] isEqual:@"1C1C1C"]) {
+        self.statusBarBackgroundView.backgroundColor = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"BlotifyPrefsNavigationBarBackground"], @"#000000");
 
         UIView *effectView = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleDark]];
         effectView.subviews[1].backgroundColor = [UIColor clearColor];
@@ -574,8 +619,8 @@ static CGFloat tabFrameHeight; // Set by [UITabBar didMoveToWindow]
 %hook SPTStatusBarBackgroundAutoResizeView
 - (void)didMoveToWindow {
     %orig;
-    if (![[[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"] isEqual:@"1c1c1c"] || ![[[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"] isEqual:@"1C1C1C"]) {
-        self.backgroundColor = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"], @"#000000");
+    if (![[[NSUserDefaults standardUserDefaults] objectForKey:@"BlotifyPrefsNavigationBarBackground"] isEqual:@"1c1c1c"] || ![[[NSUserDefaults standardUserDefaults] objectForKey:@"BlotifyPrefsNavigationBarBackground"] isEqual:@"1C1C1C"]) {
+        self.backgroundColor = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"BlotifyPrefsNavigationBarBackground"], @"#000000");
 
         UIView *effectView = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleDark]];
         effectView.subviews[1].backgroundColor = [UIColor clearColor];
@@ -592,8 +637,8 @@ static CGFloat tabFrameHeight; // Set by [UITabBar didMoveToWindow]
     }
 }
 - (void)setBackgroundColor:(id)arg1 {
-    if (![[[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"] isEqual:@"1c1c1c"] || ![[[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"] isEqual:@"1C1C1C"]) {
-        arg1 = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"navigationBarBackground"], @"#000000");
+    if (![[[NSUserDefaults standardUserDefaults] objectForKey:@"BlotifyPrefsNavigationBarBackground"] isEqual:@"1c1c1c"] || ![[[NSUserDefaults standardUserDefaults] objectForKey:@"BlotifyPrefsNavigationBarBackground"] isEqual:@"1C1C1C"]) {
+        arg1 = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"BlotifyPrefsNavigationBarBackground"], @"#000000");
     }
 }
 %end
@@ -628,7 +673,7 @@ static CGFloat tabFrameHeight; // Set by [UITabBar didMoveToWindow]
     tabNPEffectView = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleDark]];
     tabNPEffectView.subviews[1].backgroundColor = [UIColor clearColor];
     [self.backgroundView addSubview:tabNPEffectView];
-    self.backgroundView.backgroundColor = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"tabBarTint"], @"#282828");
+    self.backgroundView.backgroundColor = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"BlotifyPrefsTabBarTint"], @"#282828");
 }
 %end
 
@@ -667,7 +712,7 @@ static CGFloat tabFrameHeight; // Set by [UITabBar didMoveToWindow]
 %hook _UIBarBackground
 - (void)setBackgroundColor:(id)arg1 {
     if ([self.superview isKindOfClass:[UITabBar class]]) {
-        arg1 = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"tabBarTint"], @"#282828");
+        arg1 = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"BlotifyPrefsTabBarTint"], @"#282828");
     }
     %orig;
 }
@@ -711,7 +756,7 @@ static CGFloat tabFrameHeight; // Set by [UITabBar didMoveToWindow]
 %hook GLUENavigationRowView
 - (void)setAlpha:(CGFloat)arg1 {
     if (arg1 != (CGFloat) 1) {
-        if ([[UIView readableForegroundColorForBackgroundColor:(UIColor *)LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"primaryBackground"], @"#121212")] isEqual:[UIColor blackColor]]) {
+        if ([[UIView readableForegroundColorForBackgroundColor:(UIColor *)LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"BlotifyPrefsPrimaryBackground"], @"#121212")] isEqual:[UIColor blackColor]]) {
             self.backgroundColor = [UIColor colorWithRed:0.000 green:0.000 blue:0.000 alpha:0.100];
         } else {
             self.backgroundColor = [UIColor colorWithRed:1.000 green:1.000 blue:1.000 alpha:0.100];
@@ -729,7 +774,7 @@ static CGFloat tabFrameHeight; // Set by [UITabBar didMoveToWindow]
 %hook GLUEEntityRowView
 - (void)setBackgroundColor:(id)arg1 {
     if ([arg1 isEqual:[UIColor colorWithRed:0.000 green:0.000 blue:0.000 alpha:1.000]] && [self isHighlighted]) {
-        if ([[UIView readableForegroundColorForBackgroundColor:(UIColor *)LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"primaryBackground"], @"#121212")] isEqual:[UIColor blackColor]]) {
+        if ([[UIView readableForegroundColorForBackgroundColor:(UIColor *)LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"BlotifyPrefsPrimaryBackground"], @"#121212")] isEqual:[UIColor blackColor]]) {
               arg1 = [UIColor colorWithRed:0.000 green:0.000 blue:0.000 alpha:0.100];
            } else {
                arg1 = [UIColor colorWithRed:1.000 green:1.000 blue:1.000 alpha:0.100];
@@ -746,7 +791,7 @@ static CGFloat tabFrameHeight; // Set by [UITabBar didMoveToWindow]
 %hook SPTTableBasedCollectionViewCell
 - (void)setBackgroundColor:(id)arg1 {
     if ([arg1 isEqual:[UIColor colorWithRed:0.000 green:0.000 blue:0.000 alpha:1.000]]) {
-        if ([[UIView readableForegroundColorForBackgroundColor:(UIColor *)LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"primaryBackground"], @"#121212")] isEqual:[UIColor blackColor]]) {
+        if ([[UIView readableForegroundColorForBackgroundColor:(UIColor *)LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"BlotifyPrefsPrimaryBackground"], @"#121212")] isEqual:[UIColor blackColor]]) {
             arg1 = [UIColor colorWithRed:0.000 green:0.000 blue:0.000 alpha:0.100];
         } else {
             arg1 = [UIColor colorWithRed:1.000 green:1.000 blue:1.000 alpha:0.100];
@@ -763,7 +808,7 @@ static CGFloat tabFrameHeight; // Set by [UITabBar didMoveToWindow]
 %hook SPTSettingsTableViewCell
 - (void)insertSubview:arg1 atIndex:arg2 {
     if ([arg1 isKindOfClass:[UIView class]]) {
-        if ([[UIView readableForegroundColorForBackgroundColor:(UIColor *)LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"primaryBackground"], @"#121212")] isEqual:[UIColor blackColor]]) {
+        if ([[UIView readableForegroundColorForBackgroundColor:(UIColor *)LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"BlotifyPrefsPrimaryBackground"], @"#121212")] isEqual:[UIColor blackColor]]) {
             ((UIView *)arg1).backgroundColor = [UIColor colorWithRed:0.000 green:0.000 blue:0.000 alpha:0.100];
         } else {
             ((UIView *)arg1).backgroundColor = [UIColor colorWithRed:1.000 green:1.000 blue:1.000 alpha:0.100];
@@ -830,7 +875,7 @@ static CGFloat npViewY;
 
 %hook SPTActionButton
 - (void)setBackgroundColor:(UIColor *)arg1 {
-    arg1 = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"tabBarTint"], @"#282828");
+    arg1 = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"BlotifyPrefsTabBarTint"], @"#282828");
     %orig;
 }
 %end

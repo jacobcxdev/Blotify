@@ -23,7 +23,7 @@
     FRPreferences *table = [[self alloc] initTableWithSections:sections];
     table.title = title;
     table.tintUIColor = color;
-    table.view.backgroundColor = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"primaryBackground"], @"#121212");
+    table.view.backgroundColor = LCPParseColorString([[NSUserDefaults standardUserDefaults] objectForKey:@"BlotifyPrefsPrimaryBackground"], @"#121212");
     ((UITableView *)table.view).separatorColor = [UIColor clearColor];
     return table;
 }

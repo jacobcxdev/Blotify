@@ -1,6 +1,6 @@
-Package: com.jacobcxdev.Blotify
+Package: com.jacobcxdev.blotify
 Name: Blotify
-Depends: mobilesubstrate, libcolorpicker
+Depends: mobilesubstrate, org.thebigboss.libcolorpicker
 Version: 0.0.1
 Architecture: iphoneos-arm
 Description: Spotify UI Customiser
